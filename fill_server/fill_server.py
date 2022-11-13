@@ -2,6 +2,7 @@
 from abc import abstractmethod
 import http.client
 import json
+import logging
 import random
 import time
 from typing import List, NamedTuple
@@ -14,6 +15,9 @@ class StockTicker(NamedTuple):
 
     def serialize(self) -> str:
         return json.dumps(self._asdict())
+
+    def get_calculated_value(self) -> float:
+        return self.price * self.quantity
 
 
 class StockTickerGenerator:
@@ -44,7 +48,6 @@ class FillServer:
     def processing(self) -> None:
         try:
             while True:
-                print("Call")
                 time.sleep(random.randint(self.MIN_SLEEP_TIME, self.MAX_SLEEP_TIME))
                 self.call_controller(
                     StockTickerGenerator.generate_stock_attributes("RandName")
@@ -57,13 +60,16 @@ class FillServer:
 
         headers = {"Content-type": "application/json"}
 
-        conn.request("POST", "/fill", stock_ticker.serialize(), headers)
+        data = stock_ticker.serialize()
+        logging.info(f"Send data: {data}")
+        conn.request("POST", "/fill", data, headers)
 
         response = conn.getresponse()
-        print(response.read().decode())
+        logging.info(f"Response: {response.read().decode()}")
 
 
 if __name__ == "__main__":
-    fille_server_instance = FillServer()
+    logging.basicConfig(level=logging.INFO)
+    fill_server_instance = FillServer()
 
-    fille_server_instance.processing()
+    fill_server_instance.processing()
