@@ -1,8 +1,7 @@
-from typing import Dict, List
+from typing import Dict
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
-import time
 from base_types.account_type import Account
 from base_types.stock_type import Stock
 from fill_server.fill_server import StockTicker
