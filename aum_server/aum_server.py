@@ -1,6 +1,7 @@
 import http.client
 import json
 import logging
+import random
 import time
 from typing import List
 
@@ -9,6 +10,9 @@ from urllib.error import HTTPError
 from aum_split_type import AUMSplit
 from aum_split_generator import AUMSplitGenerator
 
+MIN_ACCOUNTS_NUMBER: int = 2
+MAX_ACCOUNTS_NUMBER: int = 5
+
 
 class AUMServer:
     aum_splits_list: List[AUMSplit] = []
@@ -16,11 +20,13 @@ class AUMServer:
     def __init__(self) -> None:
         logging.info("Starting AUM server")
 
-        self.aum_splits_list.append(AUMSplit(account_name="account1", percentage=30))
-        self.aum_splits_list.append(AUMSplit(account_name="account2", percentage=35))
-        self.aum_splits_list.append(AUMSplit(account_name="account3", percentage=35))
-
     def create_payload(self) -> str:
+        accounts_numb = random.randint(MIN_ACCOUNTS_NUMBER, MAX_ACCOUNTS_NUMBER)
+        self.aum_splits_list = []
+        for i in range(1, accounts_numb):
+            self.aum_splits_list.append(
+                AUMSplit(account_name=f"account{i}", percentage=0)
+            )
         payload = {}
         percentage_range = 100
         splits_list_lenght = len(self.aum_splits_list)

@@ -49,7 +49,7 @@ if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), ControllerRestServer)
     logging.info("Server started http://%s:%s" % (hostName, serverPort))
     
-    print('Starting background task...')
+    logging.info('Starting background task...')
     daemon = Thread(target=STOCK_CONTROLLER.send_shares_to_position_server, args=(), daemon=True, name='Background')
     daemon.start()
 
