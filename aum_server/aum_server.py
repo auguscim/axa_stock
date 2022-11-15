@@ -1,24 +1,12 @@
-from abc import abstractmethod
 import http.client
 import json
 import logging
-import random
 import time
-from typing import List, NamedTuple
+from typing import List
 
 
-class AUMSplit(NamedTuple):
-    account_name: str
-    percentage: int
-
-
-class AUMSplitGenerator:
-    @abstractmethod
-    def generate_aum_split(account_name, max_percentage: int = 100) -> AUMSplit:
-        if not account_name:
-            raise Exception("Cannot generate stock with an empty name")
-        percentage = random.randint(0, max_percentage)
-        return AUMSplit(account_name=account_name, percentage=percentage)
+from aum_split_type import AUMSplit
+from aum_split_generator import AUMSplitGenerator
 
 
 class AUMServer:
@@ -36,7 +24,7 @@ class AUMServer:
         percentage_range = 100
         splits_list_lenght = len(self.aum_splits_list)
         for key in range(splits_list_lenght):
-            if key == (splits_list_lenght-1):
+            if key == (splits_list_lenght - 1):
                 new_aum_split = AUMSplit(
                     self.aum_splits_list[key].account_name, percentage_range
                 )

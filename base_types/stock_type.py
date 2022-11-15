@@ -1,7 +1,7 @@
 
 from typing import Dict 
 
-from fill_server.fill_server import StockTicker
+from base_types.stock_ticker import StockTicker
 
 
 class Stock:

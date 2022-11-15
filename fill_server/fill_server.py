@@ -5,45 +5,22 @@ import json
 import logging
 import random
 import time
-from typing import List, NamedTuple
+from typing import NamedTuple
+
+import sys
 
 
-class StockTicker(NamedTuple):
-    name: str
-    price: float = 0
-    quantity: int = 0
+# setting path
+sys.path.append("../")
 
-    def serialize(self) -> str:
-        return json.dumps(self._asdict())
+from base_types.stock_ticker import StockTicker
 
-    def get_calculated_value(self) -> float:
-        return self.price * self.quantity
-
-
-class StockTickerGenerator:
-    @abstractmethod
-    def generate_stock_attributes(
-        name, max_quantity: int = 100, max_price: float = 100
-    ) -> StockTicker:
-        if not name:
-            raise Exception("Cannot generate stock with an empty name")
-        price = random.uniform(0, max_price)
-        quantity = random.randint(0, max_quantity)
-        return StockTicker(name=name, price=price, quantity=quantity)
-
+from stock_ticker_generator import StockTickerGenerator
 
 class FillServer:
-    # api_handler: ControllerAPI
 
     MAX_SLEEP_TIME: int = 5  # seconds
     MIN_SLEEP_TIME: int = 1  # seconds
-
-    def __init__(self) -> None:
-
-        pass
-
-    def create_payload(self) -> List[StockTicker]:
-        return []
 
     def processing(self) -> None:
         try:

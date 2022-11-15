@@ -1,18 +1,18 @@
-from typing import Dict
+from threading import Thread
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
-from base_types.account_type import Account
-from base_types.stock_type import Stock
-from fill_server.fill_server import StockTicker
+from controller.controller_server import StockController
+from base_types.stock_ticker import StockTicker
 
 hostName = "localhost"
 serverPort = 8080
 
+logging.basicConfig(level=logging.DEBUG)
 
-class MyServer(BaseHTTPRequestHandler):
-    accounts: Dict[str, Account] = {}
-    stocks: Dict[str, Stock] = {}
+STOCK_CONTROLLER = StockController()
+
+class ControllerRestServer(BaseHTTPRequestHandler):
 
     def _set_response(self) -> None:
         self.send_response(200)
@@ -26,46 +26,32 @@ class MyServer(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
-
         self._set_response()
         self.post_router(post_data)
 
     def post_router(self, post_data: str) -> None:
-
         try:
             dict_data = json.loads(post_data)
         except ValueError:
             logging.exception("Incorrect payload format, cant decode")
         if self.path == "/fill":
             fill_data = StockTicker(**dict_data)
-            print(fill_data)
-            self.calculate_fills(fill_data)
+            logging.debug(fill_data)
+            STOCK_CONTROLLER.calculate_fills(fill_data)
         elif self.path == "/aum_tick":
-            print(post_data)
-            self.update_accounts_quantity(dict_data)
+            logging.debug(post_data)
+            STOCK_CONTROLLER.update_accounts_quantity(dict_data)
         else:
-            logging.WARNING(f"Unknown path: {self.path}")
-
-    def calculate_fills(self, stock_ticker: StockTicker):
-        if stock_ticker.name in self.stocks:
-            self.stocks[stock_ticker.name].add_stock_ticker(stock_ticker)
-        else:
-            self.stocks[stock_ticker.name] = Stock(stock_ticker)
-
-    def update_accounts_quantity(self, aum_splits: Dict[str, str]):
-        for account_name, percentage in aum_splits.items():
-            if account_name in self.accounts:
-                self.accounts[account_name].split = percentage
-            else:
-                self.accounts[account_name] = Account(
-                    name=account_name, split=percentage
-                )
+            logging.warning(f"Unknown path: {self.path}")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    webServer = HTTPServer((hostName, serverPort), MyServer)
-    print("Server started http://%s:%s" % (hostName, serverPort))
+    webServer = HTTPServer((hostName, serverPort), ControllerRestServer)
+    logging.info("Server started http://%s:%s" % (hostName, serverPort))
+    
+    print('Starting background task...')
+    daemon = Thread(target=STOCK_CONTROLLER.send_shares_to_position_server, args=(), daemon=True, name='Background')
+    daemon.start()
 
     try:
         webServer.serve_forever()
@@ -73,4 +59,4 @@ if __name__ == "__main__":
         pass
 
     webServer.server_close()
-    print("Server stopped.")
+    logging.info("Controller server stopped.")
