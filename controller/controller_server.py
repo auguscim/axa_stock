@@ -5,6 +5,7 @@ import http.client
 from typing import Dict
 
 import sys
+from urllib.error import HTTPError
 
 # setting path
 sys.path.append("../")
@@ -14,7 +15,7 @@ from base_types.stock_type import Stock
 
 from base_types.stock_ticker import StockTicker
 
-POSITION_SERVER_UPDATES_INTERVAL: int = 10
+POSITION_SERVER_UPDATES_INTERVAL: int = 30
 
 
 class StockController:
@@ -29,10 +30,17 @@ class StockController:
         while True:
             start_time = time.time()
             logging.info("-- Send data to position server")
-            conn = http.client.HTTPConnection("localhost", 8081)
+            try:
+                conn = http.client.HTTPConnection("localhost", 8081)
+                headers = {"Content-type": "application/json"}
+                conn.request("POST", "/", self.serialized_accounts, headers)
+            except HTTPError as errh:
+                logging.exception("Http Error:", errh)
+            except ConnectionError as errc:
+                logging.exception("Error Connecting:", errc)
+            except Exception as err:
+                logging.exception("Exception: ", err)
 
-            headers = {"Content-type": "application/json"}
-            conn.request("POST", "/", self.serialized_accounts, headers)
             time.sleep(POSITION_SERVER_UPDATES_INTERVAL + time.time() - start_time)
 
     def update_serialized_accounts(self) -> None:
@@ -114,7 +122,7 @@ class StockController:
             raise Exception(
                 f"Algorithm error, not all stock assigned, free_stocks={free_stocks}"
             )
-        
+
         self.update_serialized_accounts()
         return self.accounts
 

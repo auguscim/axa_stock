@@ -4,6 +4,7 @@ import logging
 import time
 from typing import List
 
+from urllib.error import HTTPError
 
 from aum_split_type import AUMSplit
 from aum_split_generator import AUMSplitGenerator
@@ -51,7 +52,14 @@ class AUMServer:
         headers = {"Content-type": "application/json"}
 
         logging.info(f"Call controller with data: {payload}")
-        conn.request("POST", "/aum_tick", payload, headers)
+        try:
+            conn.request("POST", "/aum_tick", payload, headers)
+        except HTTPError as errh:
+            logging.exception("Http Error:", errh)
+        except ConnectionError as errc:
+            logging.exception("Error Connecting:", errc)
+        except Exception as err:
+            logging.exception("Exception: ", err)
 
         response = conn.getresponse()
         logging.info(f"Response: {response.read().decode()}")

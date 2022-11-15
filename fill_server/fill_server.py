@@ -1,11 +1,9 @@
-# pyre-strict
-from abc import abstractmethod
 import http.client
-import json
 import logging
 import random
 import time
-from typing import NamedTuple
+
+from urllib.error import HTTPError
 
 import sys
 
@@ -16,6 +14,7 @@ sys.path.append("../")
 from base_types.stock_ticker import StockTicker
 
 from stock_ticker_generator import StockTickerGenerator
+
 
 class FillServer:
 
@@ -33,14 +32,19 @@ class FillServer:
             pass
 
     def call_controller(self, stock_ticker: StockTicker) -> None:
-        conn = http.client.HTTPConnection("localhost", 8080)
-
-        headers = {"Content-type": "application/json"}
-
         data = stock_ticker.serialize()
-        logging.info(f"Send data: {data}")
-        conn.request("POST", "/fill", data, headers)
+        try:
+            conn = http.client.HTTPConnection("localhost", 8080)
+            headers = {"Content-type": "application/json"}
 
+            logging.info(f"Send data: {data}")
+            conn.request("POST", "/fill", data, headers)
+        except HTTPError as errh:
+            logging.exception("Http Error:", errh)
+        except ConnectionError as errc:
+            logging.exception("Error Connecting:", errc)
+        except Exception as err:
+            logging.exception("Exception: ", err)
         response = conn.getresponse()
         logging.info(f"Response: {response.read().decode()}")
 
